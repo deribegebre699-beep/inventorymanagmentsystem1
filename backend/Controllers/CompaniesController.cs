@@ -1,0 +1,103 @@
+using backend.Data;
+using backend.DTOs;
+using backend.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
+namespace backend.Controllers;
+
+[Authorize(Policy = "SuperAdminRequired")]
+[ApiController]
+[Route("api/[controller]")]
+public class CompaniesController : ControllerBase
+{
+    private readonly AppDbContext _context;
+
+    public CompaniesController(AppDbContext context)
+    {
+        _context = context;
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetCompanies()
+    {
+        var companies = await _context.Companies
+            .Select(c => new { c.Id, c.Name, c.Email, c.CreatedAt })
+            .ToListAsync();
+        return Ok(companies);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateCompany([FromBody] CreateCompanyDto dto)
+    {
+        if (await _context.Companies.AnyAsync(c => c.Email == dto.Email))
+            return BadRequest(new { message = "Email already in use." });
+
+        if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
+            return BadRequest(new { message = "Email already in use by a user." });
+
+        // Create the company
+        var company = new Company
+        {
+            Name = dto.Name,
+            Email = dto.Email,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password)
+        };
+
+        _context.Companies.Add(company);
+        await _context.SaveChangesAsync();
+
+        // Create the CompanyAdmin user linking to this company
+        var companyAdmin = new User
+        {
+            Email = company.Email,
+            PasswordHash = company.PasswordHash,
+            Role = Role.CompanyAdmin,
+            CompanyId = company.Id
+        };
+        _context.Users.Add(companyAdmin);
+        await _context.SaveChangesAsync();
+
+        return CreatedAtAction(nameof(GetCompanies), new { id = company.Id }, new { company.Id, company.Name, company.Email });
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateCompany(int id, [FromBody] UpdateCompanyDto dto)
+    {
+        var company = await _context.Companies.FindAsync(id);
+        if (company == null) return NotFound("Company not found.");
+
+        if (company.Email != dto.Email && await _context.Companies.AnyAsync(c => c.Email == dto.Email))
+            return BadRequest(new { message = "Email already in use." });
+
+        // Update company admin username if email changes
+        if (company.Email != dto.Email)
+        {
+            var adminUser = await _context.Users.FirstOrDefaultAsync(u => u.Role == Role.CompanyAdmin && u.CompanyId == company.Id);
+            if (adminUser != null)
+            {
+                adminUser.Email = dto.Email;
+            }
+        }
+
+        company.Name = dto.Name;
+        company.Email = dto.Email;
+        
+        await _context.SaveChangesAsync();
+
+        return Ok(new { company.Id, company.Name, company.Email });
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteCompany(int id)
+    {
+        var company = await _context.Companies.Include(c => c.Users).FirstOrDefaultAsync(c => c.Id == id);
+        if (company == null) return NotFound("Company not found.");
+
+        _context.Companies.Remove(company);
+        await _context.SaveChangesAsync(); // Cascade will handle users/items if configured, else EF context deletes them
+
+        return Ok(new { message = "Company deleted successfully." });
+    }
+}
