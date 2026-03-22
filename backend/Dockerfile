@@ -4,7 +4,7 @@ WORKDIR /src
 COPY ["backend.csproj", "."]
 RUN dotnet restore "backend.csproj"
 COPY . .
-WORKDIR "/src/backend"
+WORKDIR "/src"
 RUN dotnet publish "backend.csproj" -c Release -o /app/publish
 
 # Runtime stage
