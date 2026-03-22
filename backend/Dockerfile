@@ -1,10 +1,13 @@
 # Build stage
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
-COPY ["backend.csproj", "."]
+
+# Copy csproj and restore as distinct layers
+COPY ["backend.csproj", "./"]
 RUN dotnet restore "backend.csproj"
+
+# Copy everything else and build app
 COPY . .
-WORKDIR "/src"
 RUN dotnet publish "backend.csproj" -c Release -o /app/publish
 
 # Runtime stage
