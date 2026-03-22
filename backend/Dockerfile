@@ -1,7 +1,7 @@
 # Build stage
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
-COPY ["backend.csproj", "backend/"]
+COPY ["backend.csproj", "."]
 RUN dotnet restore "backend.csproj"
 COPY . .
 WORKDIR "/src/backend"
