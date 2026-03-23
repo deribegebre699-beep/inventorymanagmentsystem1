@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Send, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import LoadingButton from './LoadingButton';
 
 interface NotifyModalProps {
   isOpen: boolean;
@@ -90,14 +91,15 @@ const NotifyModal: React.FC<NotifyModalProps> = ({
                   >
                     Cancel
                   </button>
-                  <button
+                  <LoadingButton
                     onClick={handleSend}
+                    loading={false}
                     disabled={!message.trim()}
-                    className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2 h-auto"
                   >
                     <Send className="w-4 h-4" />
                     Send
-                  </button>
+                  </LoadingButton>
                 </div>
               </div>
             </motion.div>

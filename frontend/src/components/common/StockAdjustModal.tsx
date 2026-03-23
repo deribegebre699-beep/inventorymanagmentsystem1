@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { TrendingUp, TrendingDown, X, Loader2 } from 'lucide-react';
+import { TrendingUp, TrendingDown, X } from 'lucide-react';
+import LoadingButton from './LoadingButton';
 
 interface StockAdjustModalProps {
   isOpen: boolean;
@@ -133,14 +134,14 @@ const StockAdjustModal: React.FC<StockAdjustModalProps> = ({
           >
             Cancel
           </button>
-          <button
+          <LoadingButton
             onClick={handleApply}
-            disabled={!isValid || isSubmitting}
-            className="flex-1 px-4 py-2.5 bg-slate-900 text-white rounded-xl font-semibold hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            loading={isSubmitting}
+            disabled={!isValid}
+            className="flex-1 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-semibold transition-colors h-auto"
           >
-            {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
             Apply Adjustment
-          </button>
+          </LoadingButton>
         </div>
       </div>
     </div>

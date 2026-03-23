@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2, CheckCircle2, XCircle, AlertTriangle, Loader2 } from 'lucide-react';
+import LoadingButton from './LoadingButton';
 
 interface DeleteConfirmModalProps {
   isOpen: boolean;
@@ -78,13 +79,14 @@ const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
                 >
                   Cancel
                 </button>
-                <button
+                <LoadingButton
                   onClick={handleConfirm}
-                  className="flex-1 px-4 py-2.5 bg-rose-600 text-white rounded-lg font-medium hover:bg-rose-700 transition-colors flex items-center justify-center gap-2"
+                  loading={false}
+                  className="flex-1 px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2 h-auto"
                 >
                   <Trash2 className="w-4 h-4" />
                   Delete
-                </button>
+                </LoadingButton>
               </div>
             </motion.div>
           )}

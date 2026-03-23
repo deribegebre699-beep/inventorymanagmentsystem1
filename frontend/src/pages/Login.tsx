@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate, Navigate, Link } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../contexts/AuthContext';
-import { Package, Lock, Mail, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Package, Lock, Mail, Eye, EyeOff } from 'lucide-react';
+import LoadingButton from '../components/common/LoadingButton';
 
 
 const Login = () => {
@@ -129,13 +130,13 @@ const Login = () => {
             </div>
 
             <div>
-              <button
+              <LoadingButton
                 type="submit"
-                disabled={isLoading}
-                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all disabled:opacity-70 disabled:cursor-not-allowed items-center gap-2"
+                loading={isLoading}
+                className="w-full py-2.5 rounded-xl h-auto"
               >
-                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Sign In'}
-              </button>
+                Sign In
+              </LoadingButton>
             </div>
             
             {/* Demo credentials hint */}

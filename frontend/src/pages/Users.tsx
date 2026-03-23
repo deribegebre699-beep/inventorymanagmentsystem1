@@ -4,6 +4,7 @@ import { User, Role } from '../types';
 import { Plus, Pencil, Trash2, UsersIcon, Loader2, AlertCircle, Send, Eye, EyeOff, 
   // LayoutDashboard 
 } from 'lucide-react';
+import LoadingButton from '../components/common/LoadingButton';
 import DataView, { Column } from '../components/common/DataView';
 import DeleteConfirmModal from '../components/common/DeleteConfirmModal';
 import NotifyModal from '../components/common/NotifyModal';
@@ -23,6 +24,8 @@ const Users = () => {
   
   // Notify modal state
   const [notifyTarget, setNotifyTarget] = useState<User | null>(null);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Form State
   const [email, setEmail] = useState('');
@@ -66,6 +69,7 @@ const Users = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     try {
       if (editingId) {
         await api.put(`/Users/${editingId}`, { email, role });
@@ -303,12 +307,13 @@ const Users = () => {
                 >
                   Cancel
                 </button>
-                <button 
+                <LoadingButton 
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+                  loading={isSubmitting}
+                  className="flex-1 px-4 py-2.5 rounded-lg h-auto"
                 >
                   {editingId ? 'Save Changes' : 'Create User'}
-                </button>
+                </LoadingButton>
               </div>
             </form>
           </div>

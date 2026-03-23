@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/axios';
 import { Company } from '../types';
-import { Plus, Pencil, Trash2, Building2, Loader2, AlertCircle, Eye, EyeOff, Calendar } from 'lucide-react';
+import { Plus, Pencil, Trash2, Building2, AlertCircle, Eye, EyeOff, Calendar, Loader2 } from 'lucide-react';
+import LoadingButton from '../components/common/LoadingButton';
 import DataView, { Column } from '../components/common/DataView';
 import DeleteConfirmModal from '../components/common/DeleteConfirmModal';
 
@@ -17,6 +18,8 @@ const Companies = () => {
   
   // Delete modal state
   const [deleteTarget, setDeleteTarget] = useState<Company | null>(null);
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Form State
   const [name, setName] = useState('');
@@ -61,6 +64,7 @@ const Companies = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     try {
       if (editingId) {
         await api.put(`/Companies/${editingId}`, { name, email });
@@ -71,6 +75,8 @@ const Companies = () => {
       fetchCompanies();
     } catch (err: any) {
       alert(err.response?.data?.message || 'Action failed.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -259,12 +265,13 @@ const Companies = () => {
                 >
                   Cancel
                 </button>
-                <button 
+                <LoadingButton 
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
+                  loading={isSubmitting}
+                  className="flex-1 px-4 py-2.5 rounded-lg h-auto"
                 >
                   {editingId ? 'Save Changes' : 'Create Company'}
-                </button>
+                </LoadingButton>
               </div>
             </form>
           </div>

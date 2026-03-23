@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import api from '../api/axios';
-import { ShieldCheck, Lock, Loader2, CheckCircle2, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { ShieldCheck, Lock, CheckCircle2, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import LoadingButton from '../components/common/LoadingButton';
 
 const Settings = () => {
   const [oldPassword, setOldPassword] = useState('');
@@ -116,14 +117,14 @@ const Settings = () => {
             </div>
 
             <div className="pt-4">
-              <button
+              <LoadingButton
                 type="submit"
-                disabled={loading}
-                className="inline-flex items-center justify-center gap-2 px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all disabled:opacity-50"
+                loading={loading}
+                icon={<Lock className="w-5 h-5" />}
+                className="inline-flex items-center justify-center gap-2 px-8 py-3 w-auto rounded-xl h-auto"
               >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Lock className="w-5 h-5" />}
                 Update Password
-              </button>
+              </LoadingButton>
             </div>
           </form>
         </div>

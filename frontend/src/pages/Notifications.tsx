@@ -2,6 +2,7 @@ import  { useState, useEffect } from 'react';
 import api from '../api/axios';
 import { Notification } from '../types';
 import { Bell, Mail, Send, CheckCircle2, Loader2, AlertCircle, Eye, X } from 'lucide-react';
+import LoadingButton from '../components/common/LoadingButton';
 import DataView, { Column } from '../components/common/DataView';
 
 const Notifications = () => {
@@ -151,14 +152,14 @@ const Notifications = () => {
           <p className="text-slate-500 mt-2">View system alerts and messages from your team</p>
         </div>
         {activeTab === 'inbox' && unreadCount > 0 && (
-          <button
+          <LoadingButton
             onClick={markAllAsRead}
-            disabled={isMarking}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition-colors disabled:opacity-50"
+            loading={isMarking}
+            className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition-colors disabled:opacity-50 w-auto h-auto shadow-none"
           >
             <CheckCircle2 className="w-5 h-5" />
             Mark all as read
-          </button>
+          </LoadingButton>
         )}
       </div>
 
