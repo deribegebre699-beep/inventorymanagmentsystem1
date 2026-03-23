@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:5027/api', // Match backend launchSettings.json http profile port
+  baseURL: import.meta.env.VITE_API_URL +'/api', // Match backend launchSettings.json http profile port
   headers: {
     'Content-Type': 'application/json'
   }

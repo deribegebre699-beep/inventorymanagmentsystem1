@@ -12,7 +12,9 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// ----------------------
+// Controllers & JSON
+// ----------------------
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -20,6 +22,10 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     });
 
+
+// ----------------------
+// Swagger
+// ----------------------
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -49,15 +55,23 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// DbContext
+// ----------------------
+// Database (Supabase PostgreSQL)
+// ----------------------
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+
+// ----------------------
+// Services
+// ----------------------
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantService, TenantService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 
-// Authentication & Authorization
+// ----------------------
+// JWT Authentication
+// ----------------------
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -73,6 +87,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+// ----------------------
+// Authorization Policies
+// ----------------------
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("SuperAdminRequired", policy => policy.RequireRole("SuperAdmin"));
@@ -80,12 +97,29 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("ManagerRequired", policy => policy.RequireRole("SuperAdmin", "CompanyAdmin", "Manager"));
 });
 
-// CORS
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowFrontend",
-        builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+// CORS (local + Vercel)
+// builder.Services.AddCors(options =>
+// {
+//     options.AddPolicy("AllowFrontend",
+//         builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+// });
+
+
+// ----------------------
+// CORS (local + Vercel)
+// ----------------------
+builder.Services.AddCors(options => {
+    options.AddPolicy("AllowFrontend", policy =>{
+        policy
+               .SetIsOriginAllowed(origin => 
+                origin.Contains("localhost")||
+                origin.Contains("vercel.app"))
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+                
+    });
 });
+
 
 var app = builder.Build();
 
@@ -100,11 +134,17 @@ var app = builder.Build();
 //     app.UseHttpsRedirection();
 // }
 
+// ----------------------
+// Swagger always enabled
+// ----------------------
 app.UseSwagger();
 app.UseSwaggerUI();
 
-app.UseCors("AllowFrontend");
 
+
+// ----------------------
+// Static file uploads
+// ----------------------
 var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
 if (!Directory.Exists(uploadsPath))
 {
@@ -116,6 +156,13 @@ app.UseStaticFiles(new StaticFileOptions
     FileProvider = new PhysicalFileProvider(uploadsPath),
     RequestPath = "/uploads"
 });
+
+
+
+// ----------------------
+// Middleware order
+// ----------------------
+app.UseCors("AllowFrontend");
 
 app.UseAuthentication();
 app.UseAuthorization();
