@@ -63,7 +63,7 @@ public class AppDbContext : DbContext
         {
             Id = 1,
             Email = "admin@gmail.com",
-            PasswordHash = "$2a$11$VoF3UpEYgeEsGyz2AuinYO1OwE7Vtx5NqRtdHj9OpgS8vHy/1V86q", // Admin123!
+            PasswordHash = "$2a$11$VoF3UpEYgeEsGyz2AuinYO1OwE7Vtx5NqRtdHj9OpgS8vHy/1V86q", 
             Role = Role.SuperAdmin,
             CompanyId = null
         });
