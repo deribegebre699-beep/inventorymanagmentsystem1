@@ -27,7 +27,7 @@ const PageLoading = () => (
 const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles: Role[] }) => {
   const { user } = useAuth();
   
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/" replace />;
   if (!allowedRoles.includes(user.role)) return <Navigate to="/" replace />;
   
   return <>{children}</>;
@@ -37,13 +37,14 @@ const AppRoutes = () => {
   return (
     <Suspense fallback={<PageLoading />}>
       <Routes>
-        <Route path="/login" element={<Login />} />
+        <Route path="/" element={<Login />} />
+        <Route path="/login" element={<Navigate to="/" replace />} />
         <Route path="/forgot-password" element={<ForgotPasswordFlow />} />
         
         <Route element={<DashboardLayout />}>
           {/* Dashboard for Managers and Viewers */}
           <Route 
-            path="/" 
+            path="/dashboard" 
             element={
               <ProtectedRoute allowedRoles={[Role.SuperAdmin, Role.CompanyAdmin, Role.Manager, Role.Viewer]}>
                 <Dashboard />

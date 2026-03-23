@@ -25,7 +25,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const menuItems = [
     { 
       label: 'Dashboard', 
-      path: '/', 
+      path: '/dashboard', 
       icon: LayoutDashboard, 
       roles: [Role.SuperAdmin, Role.CompanyAdmin, Role.Manager, Role.Viewer] 
     },

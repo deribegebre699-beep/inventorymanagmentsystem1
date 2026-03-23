@@ -17,7 +17,7 @@ const Login = () => {
   const navigate = useNavigate();
 
   if (isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,7 +29,7 @@ const Login = () => {
     try {
       const response = await api.post('/Auth/login', { email, password });
       login(response.data);
-      navigate('/');
+      navigate('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to login. Please check your credentials.');
     } finally {
