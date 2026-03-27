@@ -27,6 +27,7 @@ const Items = () => {
   
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [overallTotals, setOverallTotals] = useState({ quantity: 0, value: 0 });
   const pageSize = 10;
   
   // Modal states
@@ -62,6 +63,10 @@ const Items = () => {
       ]);
       setItems(itemsRes.data.data);
       setTotalPages(itemsRes.data.totalPages);
+      setOverallTotals({
+        quantity: itemsRes.data.overallTotalQuantity,
+        value: itemsRes.data.overallTotalValue
+      });
       
       const rawCategories = catRes.data;
       
@@ -409,8 +414,20 @@ const Items = () => {
               <DollarSign className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Value</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Page Value</p>
               <h4 className="text-xl font-black text-slate-800">${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h4>
+            </div>
+          </div>
+          
+          {/* Overall Totals */}
+          <div className="bg-gradient-to-br from-indigo-600 to-indigo-700 border border-indigo-500 rounded-2xl px-6 py-4 shadow-lg shadow-indigo-100 flex items-center gap-4 text-white">
+            <div className="p-3 bg-white/20 backdrop-blur-md rounded-xl">
+              <TrendingUp className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-indigo-100 uppercase tracking-widest">Overall Total Value</p>
+              <h4 className="text-xl font-black">${overallTotals.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h4>
+              <p className="text-[10px] text-indigo-100 mt-1">{overallTotals.quantity.toLocaleString()} {overallTotals.quantity === 1 ? 'item' : 'items'} overall</p>
             </div>
           </div>
           </div>

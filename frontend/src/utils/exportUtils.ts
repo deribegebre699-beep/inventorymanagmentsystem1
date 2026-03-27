@@ -1,10 +1,20 @@
 import { Item } from '../types';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { AMHARIC_FONT_BASE64 } from '../assets/AmharicFont.base64';
 
 export const generatePDFBlob = (items: Item[], title: string = 'Inventory Report'): Blob => {
   const doc = new jsPDF();
   
+  // Register Amharic-supporting font
+  try {
+    doc.addFileToVFS('NotoSansEthiopic-Regular.ttf', AMHARIC_FONT_BASE64);
+    doc.addFont('NotoSansEthiopic-Regular.ttf', 'NotoSansEthiopic', 'normal');
+    doc.setFont('NotoSansEthiopic');
+  } catch (error) {
+    console.warn('Failed to load Amharic font, falling back to default', error);
+  }
+
   doc.setFontSize(18);
   doc.text(title, 14, 22);
   
@@ -26,8 +36,15 @@ export const generatePDFBlob = (items: Item[], title: string = 'Inventory Report
     body: tableRows,
     startY: 35,
     theme: 'grid',
-    styles: { fontSize: 10, cellPadding: 3 },
-    headStyles: { fillColor: [79, 70, 229] },
+    styles: { 
+      fontSize: 10, 
+      cellPadding: 3,
+      font: 'NotoSansEthiopic' // Apply to table cells
+    },
+    headStyles: { 
+      fillColor: [79, 70, 229],
+      font: 'NotoSansEthiopic' // Apply to header
+    },
     alternateRowStyles: { fillColor: [248, 250, 252] },
   });
 
@@ -58,7 +75,8 @@ export const generateCSVBlob = (items: Item[]): Blob => {
   });
   
   const csvContent = [headers.join(','), ...csvRows].join('\n');
-  return new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const BOM = '\uFEFF';
+  return new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
 };
 
 export const exportToCSV = (items: Item[], filename: string = 'inventory-report.csv'): void => {

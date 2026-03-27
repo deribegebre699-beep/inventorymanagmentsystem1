@@ -56,6 +56,10 @@ public class ItemsController : ControllerBase
         }
 
         var totalCount = await query.CountAsync();
+        
+        // Calculate overall totals for the current filter/search
+        var overallTotalQuantity = await query.SumAsync(i => i.Quantity);
+        var overallTotalValue = await query.SumAsync(i => i.Quantity * i.Price);
 
         var items = await query
             .OrderByDescending(i => i.Id)
@@ -75,7 +79,16 @@ public class ItemsController : ControllerBase
             })
             .ToListAsync();
 
-        return Ok(new PagedResponse<object>(items, totalCount, page, pageSize));
+        return Ok(new
+        {
+            Data = items,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize,
+            TotalPages = (int)Math.Ceiling((double)totalCount / (pageSize > 0 ? pageSize : 1)),
+            OverallTotalQuantity = overallTotalQuantity,
+            OverallTotalValue = overallTotalValue
+        });
     }
 
     [AllowAnonymous]
