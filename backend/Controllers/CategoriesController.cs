@@ -20,26 +20,49 @@ public class CategoriesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetCategories()
+    public async Task<IActionResult> GetCategories([FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] bool all = false)
     {
-        var categories = await _context.Categories
-            .Include(c => c.SubCategories)
+        var query = _context.Categories.Include(c => c.SubCategories).AsQueryable();
+
+        if (!all)
+        {
+            query = query.Where(c => c.ParentCategoryId == null);
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var searchLower = search.ToLower();
+            query = query.Where(c => c.Name.ToLower().Contains(searchLower) || (c.Description != null && c.Description.ToLower().Contains(searchLower)));
+        }
+
+        if (all)
+        {
+            var allCategories = await query
+                .Select(c => new { 
+                    c.Id, c.Name, c.Description, c.ParentCategoryId, c.PhotoUrl,
+                    SubCategories = c.SubCategories.Select(sc => new {
+                        sc.Id, sc.Name, sc.Description, sc.ParentCategoryId, sc.PhotoUrl
+                    })
+                })
+                .ToListAsync();
+            return Ok(allCategories);
+        }
+
+        var totalCount = await query.CountAsync();
+
+        var categories = await query
+            .OrderByDescending(c => c.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(c => new { 
-                c.Id, 
-                c.Name, 
-                c.Description, 
-                c.ParentCategoryId,
-                c.PhotoUrl,
+                c.Id, c.Name, c.Description, c.ParentCategoryId, c.PhotoUrl,
                 SubCategories = c.SubCategories.Select(sc => new {
-                    sc.Id,
-                    sc.Name,
-                    sc.Description,
-                    sc.ParentCategoryId,
-                    sc.PhotoUrl
+                    sc.Id, sc.Name, sc.Description, sc.ParentCategoryId, sc.PhotoUrl
                 })
             })
             .ToListAsync();
-        return Ok(categories);
+
+        return Ok(new PagedResponse<object>(categories, totalCount, page, pageSize));
     }
 
     [Authorize(Policy = "ManagerRequired")]
@@ -104,11 +127,27 @@ public class CategoriesController : ControllerBase
             .FirstOrDefaultAsync(c => c.Id == id);
         if (category == null) return NotFound("Category not found.");
 
-        if (category.Items.Any())
-            return BadRequest(new { message = "Cannot delete category with items. Delete or reassign items first." });
-
+        // Auto-delete subcategories and items (hard delete).
+        // First, check if there are subcategories. If so, remove their items, then the subcategories.
         if (category.SubCategories.Any())
-            return BadRequest(new { message = "Cannot delete category with subcategories. Delete subcategories first." });
+        {
+            foreach (var subcat in category.SubCategories)
+            {
+                // We need to load items for subcategories explicitly since they weren't Included in the main query
+                var subcatWithItems = await _context.Categories.Include(c => c.Items).FirstOrDefaultAsync(c => c.Id == subcat.Id);
+                if (subcatWithItems != null && subcatWithItems.Items.Any())
+                {
+                    _context.Items.RemoveRange(subcatWithItems.Items);
+                }
+            }
+            _context.Categories.RemoveRange(category.SubCategories);
+        }
+
+        // Delete items belonging directly to the main category
+        if (category.Items.Any())
+        {
+            _context.Items.RemoveRange(category.Items);
+        }
 
         _context.Categories.Remove(category);
         await _context.SaveChangesAsync();

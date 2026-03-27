@@ -20,12 +20,26 @@ public class CompaniesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetCompanies()
+    public async Task<IActionResult> GetCompanies([FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
-        var companies = await _context.Companies
+        var query = _context.Companies.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var searchLower = search.ToLower();
+            query = query.Where(c => c.Name.ToLower().Contains(searchLower) || c.Email.ToLower().Contains(searchLower));
+        }
+
+        var totalCount = await query.CountAsync();
+
+        var companies = await query
+            .OrderByDescending(c => c.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(c => new { c.Id, c.Name, c.Email, c.CreatedAt })
             .ToListAsync();
-        return Ok(companies);
+
+        return Ok(new PagedResponse<object>(companies, totalCount, page, pageSize));
     }
 
     [HttpPost]

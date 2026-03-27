@@ -5,12 +5,16 @@ import { Plus, Pencil, Trash2, Building2, AlertCircle, Eye, EyeOff, Calendar, Lo
 import LoadingButton from '../components/common/LoadingButton';
 import DataView, { Column } from '../components/common/DataView';
 import DeleteConfirmModal from '../components/common/DeleteConfirmModal';
+import Pagination from '../components/common/Pagination';
 
 
 const Companies = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const pageSize = 10;
   
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -31,8 +35,9 @@ const Companies = () => {
   const fetchCompanies = async () => {
     try {
       setIsLoading(true);
-      const res = await api.get('/Companies');
-      setCompanies(res.data);
+      const res = await api.get(`/Companies?page=${currentPage}&pageSize=${pageSize}`);
+      setCompanies(res.data.data);
+      setTotalPages(res.data.totalPages);
       setError('');
     } catch (err: any) {
       setError('Failed to load companies.');
@@ -43,7 +48,7 @@ const Companies = () => {
 
   useEffect(() => {
     fetchCompanies();
-  }, []);
+  }, [currentPage]);
 
   const openModal = (company?: Company) => {
     if (company) {
@@ -82,8 +87,13 @@ const Companies = () => {
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
-    await api.delete(`/Companies/${deleteTarget.id}`);
-    fetchCompanies();
+    try {
+      await api.delete(`/Companies/${deleteTarget.id}`);
+      setDeleteTarget(null);
+      fetchCompanies();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to delete company.');
+    }
   };
 
   const columns: Column<Company>[] = [
@@ -200,6 +210,9 @@ const Companies = () => {
             </div>
           )}
         />
+      )}
+      {!isLoading && companies.length > 0 && (
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
       )}
 
       {/* Modal */}

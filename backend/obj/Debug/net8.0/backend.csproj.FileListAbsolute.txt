@@ -369,3 +369,4 @@ C:\Users\yohan\Desktop\for deployment\backend\bin\Debug\net8.0\backend.runtimeco
 C:\Users\yohan\Desktop\for deployment\backend\bin\Debug\net8.0\backend.pdb
 C:\Users\yohan\Desktop\for deployment\backend\obj\Debug\net8.0\backend.genruntimeconfig.cache
 C:\Users\yohan\Desktop\for deployment\backend\obj\Debug\net8.0\ref\backend.dll
+C:\Users\yohan\Desktop\for deployment\backend\obj\Debug\net8.0\backend.sourcelink.json

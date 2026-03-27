@@ -7,8 +7,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import LoadingButton from '../components/common/LoadingButton';
 import DataView, { Column } from '../components/common/DataView';
 import DeleteConfirmModal from '../components/common/DeleteConfirmModal';
-import StockAdjustModal from '../components/common/StockAdjustModal';
 import ImageUpload from '../components/common/ImageUpload';
+import Pagination from '../components/common/Pagination';
+import StockAdjustModal from '../components/common/StockAdjustModal';
 
 
 const QUANTITY_TYPES = ['units', 'kg', 'grams', 'liters', 'pieces', 'boxes', 'packs'];
@@ -22,6 +23,11 @@ const Items = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const pageSize = 10;
   
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -51,10 +57,11 @@ const Items = () => {
     try {
       setIsLoading(true);
       const [itemsRes, catRes] = await Promise.all([
-        api.get('/Items'),
-        api.get('/Categories')
+        api.get(`/Items?page=${currentPage}&pageSize=${pageSize}&search=${debouncedSearch}`),
+        api.get('/Categories?all=true')
       ]);
-      setItems(itemsRes.data);
+      setItems(itemsRes.data.data);
+      setTotalPages(itemsRes.data.totalPages);
       
       const rawCategories = catRes.data;
       
@@ -81,8 +88,16 @@ const Items = () => {
   };
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setCurrentPage(1); // Reset to page 1 on new search
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  useEffect(() => {
     fetchData();
-  }, []);
+  }, [currentPage, debouncedSearch]);
 
   const openModal = (item?: Item) => {
     if (item) {
@@ -139,25 +154,24 @@ const Items = () => {
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
-    await api.delete(`/Items/${deleteTarget.id}`);
-    const res = await api.get('/Items');
-    setItems(res.data);
+    try {
+      await api.delete(`/Items/${deleteTarget.id}`);
+      setDeleteTarget(null);
+      fetchData();
+      showNotification('Item deleted successfully!', 'success');
+    } catch (err: any) {
+      showNotification(err.response?.data?.message || 'Failed to delete item.', 'error');
+    }
   };
 
   const handleStockConfirm = async (amount: number) => {
     if (!stockAdjustTarget) return;
     await api.post(`/Items/${stockAdjustTarget.id}/stock`, { amount });
-    const res = await api.get('/Items');
-    setItems(res.data);
+    fetchData();
   };
 
-  const filteredItems = items.filter(item => 
-    item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    item.categoryName?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const totalQuantity = filteredItems.reduce((sum, item) => sum + item.quantity, 0);
-  const totalValue = filteredItems.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+  const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
+  const totalValue = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
 
   const columns: Column<Item>[] = [
     {
@@ -302,7 +316,7 @@ const Items = () => {
         </div>
       ) : (
         <DataView<Item>
-          data={filteredItems}
+          data={items}
           columns={columns}
           keyExtractor={(item) => item.id}
           emptyIcon={<Package className="w-12 h-12 text-slate-300" />}
@@ -369,16 +383,18 @@ const Items = () => {
 
       {/* Summary Footer */}
       {!isLoading && items.length > 0 && (
-        <div className="mt-6 flex flex-wrap justify-end gap-4">
-          <div className="bg-white border border-slate-200 rounded-2xl px-6 py-4 shadow-sm flex items-center gap-4">
-            <div className="p-3 bg-slate-50 text-slate-600 rounded-xl">
-              <List className="w-5 h-5" />
+        <>
+          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+          <div className="mt-6 flex flex-wrap justify-end gap-4">
+            <div className="bg-white border border-slate-200 rounded-2xl px-6 py-4 shadow-sm flex items-center gap-4">
+              <div className="p-3 bg-slate-50 text-slate-600 rounded-xl">
+                <List className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Products</p>
+                <h4 className="text-xl font-black text-slate-800">{items.length} (Page)</h4>
+              </div>
             </div>
-            <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Products</p>
-              <h4 className="text-xl font-black text-slate-800">{filteredItems.length}</h4>
-            </div>
-          </div>
           <div className="bg-white border border-slate-200 rounded-2xl px-6 py-4 shadow-sm flex items-center gap-4">
             <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
               <Package className="w-5 h-5" />
@@ -397,7 +413,8 @@ const Items = () => {
               <h4 className="text-xl font-black text-slate-800">${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h4>
             </div>
           </div>
-        </div>
+          </div>
+        </>
       )}
 
       {/* Item Details Modal */}

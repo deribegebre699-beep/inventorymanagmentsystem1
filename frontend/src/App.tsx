@@ -26,92 +26,105 @@ const PageLoading = () => (
 // Role-based Route Guard
 const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles: Role[] }) => {
   const { user } = useAuth();
-  
+
   if (!user) return <Navigate to="/" replace />;
   if (!allowedRoles.includes(user.role)) return <Navigate to="/" replace />;
-  
+
   return <>{children}</>;
 };
 
+import { useIdleTimeout } from './hooks/useIdleTimeout';
+
 const AppRoutes = () => {
+  const { isAuthenticated, logout } = useAuth();
+
+  useIdleTimeout({
+    onIdle: () => {
+      if (isAuthenticated) {
+        logout();
+      }
+    },
+    idleTimeInMinutes: 30
+  });
+
   return (
     <Suspense fallback={<PageLoading />}>
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/login" element={<Navigate to="/" replace />} />
         <Route path="/forgot-password" element={<ForgotPasswordFlow />} />
-        
+
         <Route element={<DashboardLayout />}>
           {/* Dashboard for Managers and Viewers */}
-          <Route 
-            path="/dashboard" 
+          <Route
+            path="/dashboard"
             element={
               <ProtectedRoute allowedRoles={[Role.SuperAdmin, Role.CompanyAdmin, Role.Manager, Role.Viewer]}>
                 <Dashboard />
               </ProtectedRoute>
-            } 
+            }
           />
-          
+
           {/* SuperAdmin Routes */}
-          <Route 
-            path="/companies" 
+          <Route
+            path="/companies"
             element={
               <ProtectedRoute allowedRoles={[Role.SuperAdmin]}>
                 <Companies />
               </ProtectedRoute>
-            } 
+            }
           />
-          
+
           {/* CompanyAdmin Routes */}
-          <Route 
-            path="/users" 
+          <Route
+            path="/users"
             element={
               <ProtectedRoute allowedRoles={[Role.CompanyAdmin]}>
                 <Users />
               </ProtectedRoute>
-            } 
+            }
           />
-          
+
           {/* Manager & Viewer Routes */}
-          <Route 
-            path="/categories" 
+          <Route
+            path="/categories"
             element={
               <ProtectedRoute allowedRoles={[Role.Manager, Role.Viewer]}>
                 <Categories />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/items" 
+          <Route
+            path="/items"
             element={
               <ProtectedRoute allowedRoles={[Role.Manager, Role.Viewer]}>
                 <Items />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/reports" 
+          <Route
+            path="/reports"
             element={
               <ProtectedRoute allowedRoles={[Role.CompanyAdmin, Role.Manager, Role.Viewer]}>
                 <Reports />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/settings" 
+          <Route
+            path="/settings"
             element={
               <ProtectedRoute allowedRoles={[Role.SuperAdmin, Role.CompanyAdmin, Role.Manager, Role.Viewer]}>
                 <Settings />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/notifications" 
+          <Route
+            path="/notifications"
             element={
               <ProtectedRoute allowedRoles={[Role.SuperAdmin, Role.CompanyAdmin, Role.Manager, Role.Viewer]}>
                 <Notifications />
               </ProtectedRoute>
-            } 
+            }
           />
         </Route>
 

@@ -20,7 +20,7 @@ public class ItemsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetItems([FromQuery] int? categoryId)
+    public async Task<IActionResult> GetItems([FromQuery] int? categoryId, [FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
         var query = _context.Items.Include(i => i.Category).AsQueryable();
 
@@ -29,7 +29,18 @@ public class ItemsController : ControllerBase
             query = query.Where(i => i.CategoryId == categoryId.Value);
         }
 
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var searchLower = search.ToLower();
+            query = query.Where(i => i.Name.ToLower().Contains(searchLower) || (i.Category != null && i.Category.Name.ToLower().Contains(searchLower)));
+        }
+
+        var totalCount = await query.CountAsync();
+
         var items = await query
+            .OrderByDescending(i => i.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(i => new
             {
                 i.Id,
@@ -44,7 +55,22 @@ public class ItemsController : ControllerBase
             })
             .ToListAsync();
 
-        return Ok(items);
+        return Ok(new PagedResponse<object>(items, totalCount, page, pageSize));
+    }
+
+    [AllowAnonymous]
+    [HttpGet("test")]
+    public async Task<IActionResult> TestGetItems()
+    {
+        try
+        {
+            var dbItems = await _context.Items.Include(i => i.Category).ToListAsync();
+            return Ok(dbItems);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.ToString());
+        }
     }
 
     [Authorize(Policy = "ManagerRequired")]

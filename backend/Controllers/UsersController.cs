@@ -25,14 +25,28 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetUsers()
+    public async Task<IActionResult> GetUsers([FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
-        // Users are automatically scoped to the current CompanyId by EF Global Query Filters
-        var users = await _context.Users
+        var query = _context.Users
             .Where(u => u.Role == Role.Manager || u.Role == Role.Viewer)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var searchLower = search.ToLower();
+            query = query.Where(u => u.Email.ToLower().Contains(searchLower));
+        }
+
+        var totalCount = await query.CountAsync();
+
+        var users = await query
+            .OrderByDescending(u => u.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(u => new { u.Id, u.Email, u.Role, u.CompanyId })
             .ToListAsync();
-        return Ok(users);
+
+        return Ok(new PagedResponse<object>(users, totalCount, page, pageSize));
     }
 
     [HttpPost]

@@ -8,12 +8,15 @@ import LoadingButton from '../components/common/LoadingButton';
 import DataView, { Column } from '../components/common/DataView';
 import DeleteConfirmModal from '../components/common/DeleteConfirmModal';
 import NotifyModal from '../components/common/NotifyModal';
-
+import Pagination from '../components/common/Pagination';
 
 const Users = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const pageSize = 10;
   
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -36,8 +39,9 @@ const Users = () => {
   const fetchUsers = async () => {
     try {
       setIsLoading(true);
-      const res = await api.get('/Users');
-      setUsers(res.data);
+      const res = await api.get(`/Users?page=${currentPage}&pageSize=${pageSize}`);
+      setUsers(res.data.data);
+      setTotalPages(res.data.totalPages);
       setError('');
     } catch (err: any) {
       setError('Failed to load users.');
@@ -48,7 +52,7 @@ const Users = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [currentPage]);
 
   const openModal = (user?: User) => {
     if (user) {
@@ -104,8 +108,13 @@ const Users = () => {
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
-    await api.delete(`/Users/${deleteTarget.id}`);
-    fetchUsers();
+    try {
+      await api.delete(`/Users/${deleteTarget.id}`);
+      setDeleteTarget(null);
+      fetchUsers();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to delete user.');
+    }
   };
 
   const handleNotify = async (message: string): Promise<string> => {
@@ -245,6 +254,9 @@ const Users = () => {
             </div>
           )}
         />
+      )}
+      {!isLoading && users.length > 0 && (
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
       )}
 
       {/* Add/Edit User Modal */}
