@@ -33,11 +33,11 @@ export const generatePDFBlob = (items: Item[], title: string = 'Inventory Report
 
   const tableColumn = ["Item Name", "Category", "Quantity", "Unit Price", "Total Value"];
   const tableRows = items.map(item => [
-    item.name,
-    item.categoryName || 'N/A',
-    item.quantity.toString(),
-    `$${item.price.toFixed(2)}`,
-    `$${(item.quantity * item.price).toFixed(2)}`
+    (item.name || '').toString(),
+    (item.categoryName || 'N/A').toString(),
+    (item.quantity || 0).toString(),
+    `$${(item.price || 0).toFixed(2)}`,
+    `$${((item.quantity || 0) * (item.price || 0)).toFixed(2)}`
   ]);
 
   autoTable(doc, {
@@ -66,7 +66,11 @@ export const exportToPDF = (items: Item[], title: string = 'Inventory Report'): 
   const link = document.createElement('a');
   link.setAttribute('href', url);
   link.setAttribute('download', 'inventory-report.pdf');
+  link.style.display = 'none';
+  document.body.appendChild(link);
   link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 };
 
 export const generateCSVBlob = (items: Item[]): Blob => {
@@ -75,11 +79,11 @@ export const generateCSVBlob = (items: Item[]): Blob => {
   const csvRows = items.map(item => {
     const totalValue = item.quantity * item.price;
     return [
-      `"${item.name.replace(/"/g, '""')}"`,
+      `"${(item.name || '').replace(/"/g, '""')}"`,
       `"${(item.categoryName || '').replace(/"/g, '""')}"`,
-      item.quantity,
-      item.price.toFixed(2),
-      totalValue.toFixed(2)
+      (item.quantity || 0),
+      (item.price || 0).toFixed(2),
+      ((item.quantity || 0) * (item.price || 0)).toFixed(2)
     ].join(',');
   });
   
