@@ -11,7 +11,7 @@ const SuperAdminDashboard = () => {
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
-        const res = await api.get('/Companies');
+        const res = await api.get('/Companies?all=true');
         setCompanies(res.data);
       } catch (err) {
         console.error(err);

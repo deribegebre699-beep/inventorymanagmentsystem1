@@ -12,7 +12,7 @@ const CompanyAdminDashboard = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await api.get('/Users');
+        const res = await api.get('/Users?all=true');
         setUsers(res.data);
       } catch (err) {
         console.error(err);

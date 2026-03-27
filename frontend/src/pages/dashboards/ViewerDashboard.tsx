@@ -17,8 +17,8 @@ const ViewerDashboard = () => {
     const fetchData = async () => {
       try {
         const [itemsRes, catRes] = await Promise.all([
-          api.get('/Items'),
-          api.get('/Categories')
+          api.get('/Items?all=true'),
+          api.get('/Categories?all=true')
         ]);
         setItems(itemsRes.data);
         setCategories(catRes.data);

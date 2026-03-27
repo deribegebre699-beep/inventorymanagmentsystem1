@@ -25,7 +25,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetUsers([FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+    public async Task<IActionResult> GetUsers([FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] bool all = false)
     {
         var query = _context.Users
             .Where(u => u.Role == Role.Manager || u.Role == Role.Viewer)
@@ -35,6 +35,15 @@ public class UsersController : ControllerBase
         {
             var searchLower = search.ToLower();
             query = query.Where(u => u.Email.ToLower().Contains(searchLower));
+        }
+
+        if (all)
+        {
+            var allUsers = await query
+                .OrderByDescending(u => u.Id)
+                .Select(u => new { u.Id, u.Email, u.Role, u.CompanyId })
+                .ToListAsync();
+            return Ok(allUsers);
         }
 
         var totalCount = await query.CountAsync();

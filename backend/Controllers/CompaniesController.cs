@@ -20,7 +20,7 @@ public class CompaniesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetCompanies([FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+    public async Task<IActionResult> GetCompanies([FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] bool all = false)
     {
         var query = _context.Companies.AsQueryable();
 
@@ -28,6 +28,15 @@ public class CompaniesController : ControllerBase
         {
             var searchLower = search.ToLower();
             query = query.Where(c => c.Name.ToLower().Contains(searchLower) || c.Email.ToLower().Contains(searchLower));
+        }
+
+        if (all)
+        {
+            var allCompanies = await query
+                .OrderByDescending(c => c.Id)
+                .Select(c => new { c.Id, c.Name, c.Email, c.CreatedAt })
+                .ToListAsync();
+            return Ok(allCompanies);
         }
 
         var totalCount = await query.CountAsync();

@@ -20,7 +20,7 @@ public class ItemsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetItems([FromQuery] int? categoryId, [FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+    public async Task<IActionResult> GetItems([FromQuery] int? categoryId, [FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] bool all = false)
     {
         var query = _context.Items.Include(i => i.Category).AsQueryable();
 
@@ -33,6 +33,26 @@ public class ItemsController : ControllerBase
         {
             var searchLower = search.ToLower();
             query = query.Where(i => i.Name.ToLower().Contains(searchLower) || (i.Category != null && i.Category.Name.ToLower().Contains(searchLower)));
+        }
+
+        if (all)
+        {
+            var allItems = await query
+                .OrderByDescending(i => i.Id)
+                .Select(i => new
+                {
+                    i.Id,
+                    i.Name,
+                    i.Description,
+                    i.Price,
+                    i.Quantity,
+                    i.QuantityType,
+                    CategoryName = i.Category != null ? i.Category.Name : string.Empty,
+                    i.CategoryId,
+                    i.PhotoUrl
+                })
+                .ToListAsync();
+            return Ok(allItems);
         }
 
         var totalCount = await query.CountAsync();
