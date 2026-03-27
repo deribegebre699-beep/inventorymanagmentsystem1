@@ -6,13 +6,22 @@ import { AMHARIC_FONT_BASE64 } from '../assets/AmharicFont.base64';
 export const generatePDFBlob = (items: Item[], title: string = 'Inventory Report'): Blob => {
   const doc = new jsPDF();
   
-  // Register Amharic-supporting font
-  try {
-    doc.addFileToVFS('NotoSansEthiopic-Regular.ttf', AMHARIC_FONT_BASE64);
-    doc.addFont('NotoSansEthiopic-Regular.ttf', 'NotoSansEthiopic', 'normal');
-    doc.setFont('NotoSansEthiopic');
-  } catch (error) {
-    console.warn('Failed to load Amharic font, falling back to default', error);
+  // Verify font data integrity
+  const isFontValid = AMHARIC_FONT_BASE64 && !AMHARIC_FONT_BASE64.startsWith('CgoKCgoKCgo8IURPQ1RZUEUgaHRtbD4') && !AMHARIC_FONT_BASE64.includes('<!DOCTYPE');
+  let fontLoaded = false;
+
+  // Register Amharic-supporting font if valid
+  if (isFontValid) {
+    try {
+      doc.addFileToVFS('NotoSansEthiopic-Regular.ttf', AMHARIC_FONT_BASE64);
+      doc.addFont('NotoSansEthiopic-Regular.ttf', 'NotoSansEthiopic', 'normal');
+      doc.setFont('NotoSansEthiopic');
+      fontLoaded = true;
+    } catch (error) {
+      console.warn('Failed to load Amharic font, falling back to default', error);
+    }
+  } else {
+    console.warn('Amharic font data is invalid or corrupted. Using default font.');
   }
 
   doc.setFontSize(18);
@@ -39,11 +48,11 @@ export const generatePDFBlob = (items: Item[], title: string = 'Inventory Report
     styles: { 
       fontSize: 10, 
       cellPadding: 3,
-      font: 'NotoSansEthiopic' // Apply to table cells
+      font: fontLoaded ? 'NotoSansEthiopic' : 'helvetica' // Apply conditionally
     },
     headStyles: { 
       fillColor: [79, 70, 229],
-      font: 'NotoSansEthiopic' // Apply to header
+      font: fontLoaded ? 'NotoSansEthiopic' : 'helvetica' // Apply conditionally
     },
     alternateRowStyles: { fillColor: [248, 250, 252] },
   });
