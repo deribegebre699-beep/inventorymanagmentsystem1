@@ -77,7 +77,7 @@ export const generateCSVBlob = (items: Item[]): Blob => {
   const headers = ["Item Name", "Category", "Quantity", "Unit Price", "Total Value"];
   
   const csvRows = items.map(item => {
-    const totalValue = item.quantity * item.price;
+    // const totalValue = item.quantity * item.price;
     return [
       `"${(item.name || '').replace(/"/g, '""')}"`,
       `"${(item.categoryName || '').replace(/"/g, '""')}"`,
