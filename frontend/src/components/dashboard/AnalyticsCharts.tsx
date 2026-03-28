@@ -38,7 +38,7 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
       {/* Dynamic Pie Chart */}
       <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
         <h3 className="text-lg font-bold text-slate-800 mb-6 font-sans">{pieChartTitle}</h3>
-        <div className="h-[300px] w-full">
+        <div className="h-[450px] w-full">
           {pieChartData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -62,7 +62,7 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
                     boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' 
                   }} 
                 />
-                <Legend verticalAlign="bottom" height={36} />
+                <Legend verticalAlign="bottom" align="center" iconType="circle" />
               </PieChart>
             </ResponsiveContainer>
           ) : (
