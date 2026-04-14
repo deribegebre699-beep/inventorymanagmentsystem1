@@ -34,8 +34,10 @@ public class AuthController : ControllerBase
     {
         var email = dto.Email.Trim();
         
-        // Find user by Email
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
+        // Find user by Email (ignore tenancy filters during login)
+        var user = await _context.Users
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
         
         if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
         {
@@ -81,7 +83,9 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
     {
         var email = dto.Email.Trim();
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
+        var user = await _context.Users
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
         if (user == null) return NotFound(new { message = "Email not found in our system." });
 
         // Generate 6-digit OTP
@@ -162,7 +166,9 @@ public class AuthController : ControllerBase
         if (otp == null)
             return BadRequest(new { message = "Invalid or expired OTP." });
 
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
+        var user = await _context.Users
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
         if (user == null) return NotFound("User no longer exists.");
 
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
