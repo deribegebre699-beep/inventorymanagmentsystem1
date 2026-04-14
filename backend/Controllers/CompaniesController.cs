@@ -54,17 +54,18 @@ public class CompaniesController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateCompany([FromBody] CreateCompanyDto dto)
     {
-        if (await _context.Companies.AnyAsync(c => c.Email == dto.Email))
+        var email = dto.Email.Trim();
+        if (await _context.Companies.AnyAsync(c => c.Email == email))
             return BadRequest(new { message = "Email already in use." });
 
-        if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
+        if (await _context.Users.AnyAsync(u => u.Email == email))
             return BadRequest(new { message = "Email already in use by a user." });
 
         // Create the company
         var company = new Company
         {
             Name = dto.Name,
-            Email = dto.Email,
+            Email = email,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password)
         };
 
@@ -91,21 +92,22 @@ public class CompaniesController : ControllerBase
         var company = await _context.Companies.FindAsync(id);
         if (company == null) return NotFound("Company not found.");
 
-        if (company.Email != dto.Email && await _context.Companies.AnyAsync(c => c.Email == dto.Email))
+        var email = dto.Email.Trim();
+        if (company.Email != email && await _context.Companies.AnyAsync(c => c.Email == email))
             return BadRequest(new { message = "Email already in use." });
 
         // Update company admin username if email changes
-        if (company.Email != dto.Email)
+        if (company.Email != email)
         {
             var adminUser = await _context.Users.FirstOrDefaultAsync(u => u.Role == Role.CompanyAdmin && u.CompanyId == company.Id);
             if (adminUser != null)
             {
-                adminUser.Email = dto.Email;
+                adminUser.Email = email;
             }
         }
 
         company.Name = dto.Name;
-        company.Email = dto.Email;
+        company.Email = email;
         
         await _context.SaveChangesAsync();
 

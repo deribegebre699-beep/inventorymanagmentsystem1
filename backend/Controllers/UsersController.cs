@@ -64,12 +64,13 @@ public class UsersController : ControllerBase
         if (dto.Role != Role.Manager && dto.Role != Role.Viewer)
             return BadRequest(new { message = "Can only create Managers or Viewers." });
 
-        if (await _context.Users.IgnoreQueryFilters().AnyAsync(u => u.Email == dto.Email))
+        var email = dto.Email.Trim();
+        if (await _context.Users.IgnoreQueryFilters().AnyAsync(u => u.Email == email))
             return BadRequest(new { message = "Email already in use." });
 
         var user = new User
         {
-            Email = dto.Email,
+            Email = email,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
             Role = dto.Role
         };
@@ -107,10 +108,11 @@ public class UsersController : ControllerBase
         if (dto.Role != Role.Manager && dto.Role != Role.Viewer)
             return BadRequest(new { message = "Invalid role specified." });
 
-        if (user.Email != dto.Email && await _context.Users.IgnoreQueryFilters().AnyAsync(u => u.Email == dto.Email))
+        var email = dto.Email.Trim();
+        if (user.Email != email && await _context.Users.IgnoreQueryFilters().AnyAsync(u => u.Email == email))
             return BadRequest(new { message = "Email already in use." });
 
-        user.Email = dto.Email;
+        user.Email = email;
         user.Role = dto.Role;
         
         try
