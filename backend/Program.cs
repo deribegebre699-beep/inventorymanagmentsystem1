@@ -113,17 +113,18 @@ builder.Services.AddAuthorization(options =>
 
 
 // ----------------------
-// CORS (local + Vercel)
+// CORS Configuration
 // ----------------------
 builder.Services.AddCors(options => {
-    options.AddPolicy("AllowFrontend", policy =>{
-        policy
-               .SetIsOriginAllowed(origin => 
-                origin.Contains("localhost")||
-                origin.Contains("vercel.app"))
-                .AllowAnyHeader()
-                .AllowAnyMethod();
-                
+    options.AddPolicy("AllowFrontend", policy => {
+        policy.WithOrigins(
+                "https://inventorymanagmentsystem1.vercel.app",
+                "http://localhost:5173",
+                "http://localhost:3000"
+               )
+               .AllowAnyHeader()
+               .AllowAnyMethod()
+               .AllowCredentials();
     });
 });
 
