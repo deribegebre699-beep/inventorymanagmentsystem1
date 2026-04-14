@@ -61,29 +61,40 @@ public class CompaniesController : ControllerBase
         if (await _context.Users.AnyAsync(u => u.Email == email))
             return BadRequest(new { message = "Email already in use by a user." });
 
-        // Create the company
-        var company = new Company
+        // Create the company and its admin user in a transaction
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
         {
-            Name = dto.Name,
-            Email = email,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password)
-        };
+            var company = new Company
+            {
+                Name = dto.Name,
+                Email = email,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password)
+            };
 
-        _context.Companies.Add(company);
-        await _context.SaveChangesAsync();
+            _context.Companies.Add(company);
+            await _context.SaveChangesAsync();
 
-        // Create the CompanyAdmin user linking to this company
-        var companyAdmin = new User
+            // Create the CompanyAdmin user linking to this company
+            var companyAdmin = new User
+            {
+                Email = company.Email,
+                PasswordHash = company.PasswordHash,
+                Role = Role.CompanyAdmin,
+                CompanyId = company.Id
+            };
+            _context.Users.Add(companyAdmin);
+            await _context.SaveChangesAsync();
+
+            await transaction.CommitAsync();
+
+            return CreatedAtAction(nameof(GetCompanies), new { id = company.Id }, new { company.Id, company.Name, company.Email });
+        }
+        catch (Exception)
         {
-            Email = company.Email,
-            PasswordHash = company.PasswordHash,
-            Role = Role.CompanyAdmin,
-            CompanyId = company.Id
-        };
-        _context.Users.Add(companyAdmin);
-        await _context.SaveChangesAsync();
-
-        return CreatedAtAction(nameof(GetCompanies), new { id = company.Id }, new { company.Id, company.Name, company.Email });
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 
     [HttpPut("{id}")]
