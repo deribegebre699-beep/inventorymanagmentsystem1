@@ -90,11 +90,16 @@ public class CompaniesController : ControllerBase
 
             await transaction.CommitAsync();
 
-            return CreatedAtAction(nameof(GetCompanies), new { id = company.Id }, new { company.Id, company.Name, company.Email });
+            return Ok(new { company.Id, company.Name, company.Email });
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
+            try 
+            {
+                await transaction.RollbackAsync();
+            }
+            catch { /* Ignore rollback failures if transaction already completed */ }
+            
             Console.WriteLine($"[ERROR] Company creation failed: {ex.Message}");
             return StatusCode(500, new { message = "Failed to create company and admin user.", detail = ex.Message });
         }
