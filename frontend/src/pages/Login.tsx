@@ -35,7 +35,7 @@ const Login = () => {
       if (err.response?.status === 401) {
         setError('Invalid email or password. Please try again.');
       } else if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
-        setError('The server is taking too long to respond (Database cold start). Please try again in 60 seconds.');
+        setError('The server is taking too long to respond. Please check your data connection or wait a moment.');
       } else {
         setError(err.response?.data?.message || 'The server encountered an error. This is often due to a database cold start. Please try again in a moment.');
       }

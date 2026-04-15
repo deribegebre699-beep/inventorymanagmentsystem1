@@ -4,8 +4,7 @@ const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL +'/api', // Match backend launchSettings.json http profile port
   headers: {
     'Content-Type': 'application/json'
-  },
-  timeout: 60000 // Increased to 60s to accommodate Render free tier cold starts
+  }
 });
 
 // Request interceptor to attach JWT token
