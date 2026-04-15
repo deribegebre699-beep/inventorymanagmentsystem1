@@ -33,17 +33,31 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Login([FromBody] LoginDto dto)
     {
         var email = dto.Email.Trim();
+        Console.WriteLine($"[DEBUG] Login attempt for email: '{email}'");
         
         // Find user by Email (ignore tenancy filters during login)
         var user = await _context.Users
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
         
-        if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
+        if (user == null)
         {
+            Console.WriteLine($"[DEBUG] Login FAILED: User '{email}' NOT FOUND in database.");
             return Unauthorized(new { message = "Invalid credentials" });
         }
 
+        Console.WriteLine($"[DEBUG] User FOUND: '{user.Email}', Role: '{user.Role}', CompanyId: '{user.CompanyId}'");
+        Console.WriteLine($"[DEBUG] Verifying password...");
+
+        bool isPasswordValid = BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash);
+        
+        if (!isPasswordValid)
+        {
+            Console.WriteLine("[DEBUG] Login FAILED: Password mismatch.");
+            return Unauthorized(new { message = "Invalid credentials" });
+        }
+
+        Console.WriteLine("[DEBUG] Login SUCCESS. Generating token...");
         var token = GenerateJwtToken(user);
 
         return Ok(new

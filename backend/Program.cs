@@ -66,6 +66,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
                 maxRetryCount: 5,
                 maxRetryDelay: TimeSpan.FromSeconds(10),
                 errorCodesToAdd: null);
+            sqlOptions.CommandTimeout(90);
         }));
 
 
