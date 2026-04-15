@@ -117,30 +117,17 @@ builder.Services.AddAuthorization(options =>
 // CORS (local + Vercel)
 // ----------------------
 builder.Services.AddCors(options => {
-    options.AddPolicy("AllowFrontend", policy =>{
-        policy
-               .SetIsOriginAllowed(origin => 
-                origin.Contains("localhost")||
-                origin.Contains("vercel.app"))
-                .AllowAnyHeader()
-                .AllowAnyMethod();
-                
+    options.AddPolicy("AllowFrontend", policy => {
+        policy.WithOrigins("https://inventorymanagmentsystem1.vercel.app", "http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
     });
 });
 
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-// if (app.Environment.IsDevelopment())
-// {
-//     app.UseSwagger();
-//     app.UseSwaggerUI();
-// }
-// else 
-// {
-//     app.UseHttpsRedirection();
-// }
+app.UseDeveloperExceptionPage();
 
 // ----------------------
 // Swagger always enabled
@@ -176,5 +163,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapGet("/api/health", () => Results.Ok(new { status = "Healthy" }));
 
 app.Run();
