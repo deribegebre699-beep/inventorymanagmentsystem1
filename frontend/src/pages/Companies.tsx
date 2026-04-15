@@ -79,7 +79,11 @@ const Companies = () => {
       closeModal();
       fetchCompanies();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Action failed.');
+      console.error('Company action failed:', err);
+      // Backend returns either {message: "..."} or {message: "...", detail: "..."}
+      const errorMessage = err.response?.data?.message || err.message || 'Action failed.';
+      const errorDetail = err.response?.data?.detail ? `\nDetail: ${err.response.data.detail}` : '';
+      alert(`${errorMessage}${errorDetail}`);
     } finally {
       setIsSubmitting(false);
     }
