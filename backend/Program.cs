@@ -118,9 +118,10 @@ builder.Services.AddAuthorization(options =>
 // ----------------------
 builder.Services.AddCors(options => {
     options.AddPolicy("AllowFrontend", policy => {
-        policy.WithOrigins("https://inventorymanagmentsystem1.vercel.app", "http://localhost:5173")
+        policy.SetIsOriginAllowed(origin => true) // allow any origin securely
               .AllowAnyHeader()
-              .AllowAnyMethod();
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
 });
 
@@ -157,6 +158,7 @@ app.UseStaticFiles(new StaticFileOptions
 // ----------------------
 // Middleware order
 // ----------------------
+app.UseRouting();
 app.UseCors("AllowFrontend");
 
 app.UseAuthentication();
