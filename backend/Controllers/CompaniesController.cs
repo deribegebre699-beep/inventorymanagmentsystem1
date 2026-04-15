@@ -54,12 +54,14 @@ public class CompaniesController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateCompany([FromBody] CreateCompanyDto dto)
     {
-        var email = dto.Email.Trim();
-        if (await _context.Companies.AnyAsync(c => c.Email == email))
-            return BadRequest(new { message = "Email already in use." });
+        var email = dto.Email.Trim().ToLower();
+        
+        // Use IgnoreQueryFilters to check the ENTIRE database for email conflicts
+        if (await _context.Companies.IgnoreQueryFilters().AnyAsync(c => c.Email.ToLower() == email))
+            return BadRequest(new { message = "Company email already in use." });
 
-        if (await _context.Users.AnyAsync(u => u.Email == email))
-            return BadRequest(new { message = "Email already in use by a user." });
+        if (await _context.Users.IgnoreQueryFilters().AnyAsync(u => u.Email.ToLower() == email))
+            return BadRequest(new { message = "User email already in use." });
 
         // Create the company and its admin user in a transaction
         using var transaction = await _context.Database.BeginTransactionAsync();
@@ -78,7 +80,7 @@ public class CompaniesController : ControllerBase
             // Create the CompanyAdmin user linking to this company
             var companyAdmin = new User
             {
-                Email = company.Email,
+                Email = email,
                 PasswordHash = company.PasswordHash,
                 Role = Role.CompanyAdmin,
                 CompanyId = company.Id
@@ -90,10 +92,11 @@ public class CompaniesController : ControllerBase
 
             return CreatedAtAction(nameof(GetCompanies), new { id = company.Id }, new { company.Id, company.Name, company.Email });
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            throw;
+            Console.WriteLine($"[ERROR] Company creation failed: {ex.Message}");
+            return StatusCode(500, new { message = "Failed to create company and admin user.", detail = ex.Message });
         }
     }
 
