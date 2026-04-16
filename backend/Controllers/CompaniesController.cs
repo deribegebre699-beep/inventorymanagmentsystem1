@@ -63,46 +63,49 @@ public class CompaniesController : ControllerBase
         if (await _context.Users.IgnoreQueryFilters().AnyAsync(u => u.Email.ToLower() == email))
             return BadRequest(new { message = "User email already in use." });
 
-        // Create the company and its admin user in a transaction
-        using var transaction = await _context.Database.BeginTransactionAsync();
-        try
+        // Create the company and its admin user as a retriable unit
+        var strategy = _context.Database.CreateExecutionStrategy();
+        
+        return await strategy.ExecuteAsync(async () =>
         {
-            var company = new Company
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
             {
-                Name = dto.Name,
-                Email = email,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password)
-            };
+                var company = new Company
+                {
+                    Name = dto.Name,
+                    Email = email,
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password)
+                };
 
-            _context.Companies.Add(company);
-            await _context.SaveChangesAsync();
+                _context.Companies.Add(company);
+                await _context.SaveChangesAsync();
 
-            // Create the CompanyAdmin user linking to this company
-            var companyAdmin = new User
-            {
-                Email = email,
-                PasswordHash = company.PasswordHash,
-                Role = Role.CompanyAdmin,
-                CompanyId = company.Id
-            };
-            _context.Users.Add(companyAdmin);
-            await _context.SaveChangesAsync();
+                // Create the CompanyAdmin user linking to this company
+                var companyAdmin = new User
+                {
+                    Email = email,
+                    PasswordHash = company.PasswordHash, // Syncing password with company login
+                    Role = Role.CompanyAdmin,
+                    CompanyId = company.Id
+                };
+                _context.Users.Add(companyAdmin);
+                await _context.SaveChangesAsync();
 
-            await transaction.CommitAsync();
+                await transaction.CommitAsync();
 
-            return Ok(new { company.Id, company.Name, company.Email });
-        }
-        catch (Exception ex)
-        {
-            try 
+                return Ok(new { company.Id, company.Name, company.Email });
+            }
+            catch (Exception ex)
             {
                 await transaction.RollbackAsync();
+                Console.WriteLine($"[ERROR] Company creation transaction failed: {ex.Message}");
+                // We rethrow for the strategy to handle retries if applicable, 
+                // but for simple validation errors we might want to return a bad request.
+                // However, since we checked for email usage before, any exception here is likely a DB issue.
+                throw; 
             }
-            catch { /* Ignore rollback failures if transaction already completed */ }
-            
-            Console.WriteLine($"[ERROR] Company creation failed: {ex.Message}");
-            return StatusCode(500, new { message = "Failed to create company and admin user.", detail = ex.Message });
-        }
+        });
     }
 
     [HttpPut("{id}")]
