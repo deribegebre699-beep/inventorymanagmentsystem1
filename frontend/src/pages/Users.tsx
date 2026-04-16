@@ -103,6 +103,8 @@ const Users = () => {
       }
       
       alert(`Error: ${message}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
